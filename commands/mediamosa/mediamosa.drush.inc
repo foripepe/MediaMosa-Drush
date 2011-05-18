@@ -127,6 +127,7 @@ function mediamosa_drush_command() {
       'profile_id' => 'Profile id.',
     ),
     'options' => array(
+      'priority' => 'Priority',
     ),
     'examples' => array(
       'drush mm-transcode ALZbgPascjFtT9OLa8g7HtGp' => 'Transcode the mediafile, where the id is ALZbgPascjFtT9OLa8g7HtGp.',
@@ -142,6 +143,7 @@ function mediamosa_drush_command() {
       'profile_id' => 'Profile id.',
     ),
     'options' => array(
+      'priority' => 'Priority',
     ),
     'examples' => array(
       'drush mm-transcode-csv input.csv' => 'Transcode the mediafiles, where the ids are in the input.csv file.',
@@ -157,6 +159,7 @@ function mediamosa_drush_command() {
       'profile_id' => 'Profile id.',
     ),
     'options' => array(
+      'priority' => 'Priority',
     ),
     'examples' => array(
       'drush mm-retranscode ALZbgPascjFtT9OLa8g7HtGp' => 'Retranscode the mediafile, where the id is ALZbgPascjFtT9OLa8g7HtGp.',
@@ -172,6 +175,7 @@ function mediamosa_drush_command() {
       'profile_id' => 'Profile id.',
     ),
     'options' => array(
+      'priority' => 'Priority',
     ),
     'examples' => array(
       'drush mm-retranscode-csv input.csv' => 'Retranscode the mediafiles, where the ids are in the input.csv file.',
@@ -187,6 +191,7 @@ function mediamosa_drush_command() {
       'hint' => 'Hinting (TRUE, FALSE)',
     ),
     'options' => array(
+      'priority' => 'Priority',
     ),
     'examples' => array(
       'drush mm-analyse ALZbgPascjFtT9OLa8g7HtGp' => 'Analyse the mediafile, where the id is ALZbgPascjFtT9OLa8g7HtGp.',
@@ -202,6 +207,7 @@ function mediamosa_drush_command() {
       'hint' => 'Hinting (TRUE, FALSE)',
     ),
     'options' => array(
+      'priority' => 'Priority',
     ),
     'examples' => array(
       'drush mm-analyse-csv input.csv' => 'Analyse the mediafile, where the ids are in the input.csv file.',
@@ -319,17 +325,32 @@ function mediamosa_drush_command() {
   $items['mm-still-csv'] = array(
     'description' => 'Recreate the stills from a list of mediafiles in the given inputfile
       If the mediafile has more than 1 still, it does not do anything.
-      If the mediafile has one still, it deletes that, and create a new one.
-      If the still has not got still, then just create one.',
+      If the mediafile has one still, it deletes that, and creates a new one.
+      If the mediafile has not got still image, then just creates one.',
     'arguments' => array(
       'input_csv' => 'The input CSV file.',
       'frametime' => 'Still frametime (in seconds).',
       'size' => 'Size of the still (eg. 352x288).',
     ),
     'options' => array(
+      'priority' => 'Priority',
     ),
     'examples' => array(
       'drush mm-still-csv input.csv' => 'Create still for the mediafiles, where the ids are in the input.csv file.',
+    ),
+    'aliases' => array(),
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
+  );
+
+  $items['mm-leraar-still-delete'] = array(
+    'description' => 'Delete all the still images under app_id = 12 (Leraar24).
+      Delete these still images from the db and the SAN/NAS too.',
+    'arguments' => array(
+    ),
+    'options' => array(
+    ),
+    'examples' => array(
+      'drush mm-leraar-still-delete' => 'Delete all the Leraar24 (app_id = 12) stills from production.',
     ),
     'aliases' => array(),
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,

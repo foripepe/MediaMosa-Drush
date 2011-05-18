@@ -15,8 +15,10 @@ define('DRUSH_MEDIAMOSA_LIBRARY_MAX_JOB_SLOTS', 10);
  * Transcode mediafile.
  *
  * @param $mediafile_id
+ * @param $profile_id
+ * @param $priority
  */
-function drush_mediamosa_library_transcode($mediafile_id, $profile_id = NULL) {
+function drush_mediamosa_library_transcode($mediafile_id, $profile_id = NULL, $priority = NULL) {
   $fields = array(
     mediamosa_asset_mediafile_db::ID,
     mediamosa_asset_mediafile_db::APP_ID,
@@ -34,6 +36,9 @@ function drush_mediamosa_library_transcode($mediafile_id, $profile_id = NULL) {
     );
     if ($profile_id) {
       $params['profile_id'] = $profile_id;
+    }
+    if ($priority) {
+      $params['priority'] = $priority;
     }
     $response = mediamosa_response_connector::static_do_restcall($uri, $method, $params);
     $job_id = (isset($response['items'][1]['job_id']) ? (string)$response['items'][1]['job_id'] : NULL);
@@ -56,8 +61,10 @@ function drush_mediamosa_library_transcode($mediafile_id, $profile_id = NULL) {
  * Retranscode mediafile.
  *
  * @param $mediafile_id
+ * @param $profile_id
+ * @param $priority
  */
-function drush_mediamosa_library_retranscode($mediafile_id, $profile_id = NULL) {
+function drush_mediamosa_library_retranscode($mediafile_id, $profile_id = NULL, $priority = NULL) {
   $fields = array(
     mediamosa_asset_mediafile_db::ID,
     mediamosa_asset_mediafile_db::APP_ID,
@@ -86,6 +93,9 @@ function drush_mediamosa_library_retranscode($mediafile_id, $profile_id = NULL) 
   if ($profile_id) {
     $params['profile_id'] = $profile_id;
   }
+  if ($priority) {
+    $params['priority'] = $priority;
+  }
   $response = mediamosa_response_connector::static_do_restcall($uri, $method, $params);
   $job_id = (isset($response['items'][1]['job_id']) ? (string)$response['items'][1]['job_id'] : NULL);
   if (!$job_id) {
@@ -103,8 +113,10 @@ function drush_mediamosa_library_retranscode($mediafile_id, $profile_id = NULL) 
  * Analyse mediafile.
  *
  * @param $mediafile_id
+ * @param $hint
+ * @param $priority
  */
-function drush_mediamosa_library_analyse($mediafile_id, $hint = NULL) {
+function drush_mediamosa_library_analyse($mediafile_id, $hint = NULL, $priority = NULL) {
   $fields = array(
     mediamosa_asset_mediafile_db::ID,
     mediamosa_asset_mediafile_db::APP_ID,
@@ -124,6 +136,10 @@ function drush_mediamosa_library_analyse($mediafile_id, $hint = NULL) {
 
     if ($hint) {
       $params['hint'] = $hint;
+    }
+
+    if ($priority) {
+      $params['priority'] = $priority;
     }
 
     $response = mediamosa_response_connector::static_do_restcall($uri, $method, $params);
@@ -202,14 +218,69 @@ function drush_mediamosa_library_delete($mediafile_id) {
 }
 
 /**
+ * Delete a still.
+ * Only leraar24 (app_id = 12) is allowed for security reason.
+ *
+ * @param $app_id
+ * @param $owner_id
+ * @param $asset_id
+ * @param $mediafile_id
+ * @param $still_id
+ */
+function drush_mediamosa_library_still_delete($app_id, $owner_id, $asset_id, $mediafile_id = NULL, $still_id = NULL) {
+  // App id of leraar24.
+  $app_id_leraar = 12;
+
+  // Security check.
+  // Only leraar24 (app_id = 12) is allowed.
+  if ($app_id_leraar != $app_id) {
+    drush_print(dt('Still delete from asset: @id [fail, it is not leraar24: app_id (@app_id_leraar) != app_id (@app_id_get)]', array(
+      '@id' => $asset_id,
+      '@app_id_leraar' => $app_id_leraar,
+      '@app_id_get' => $app_id,
+    )));
+  }
+
+  // Delete the existing still.
+  $uri = sprintf('asset/%s/still/delete', $asset_id);
+  $method = 'POST';
+
+  $params = array(
+    'app_id' => $app_id_leraar,
+    'user_id' => $owner_id,
+  );
+  if ($mediafile_id) {
+    $params['mediafile_id'] = $mediafile_id;
+  }
+  if ($still_id) {
+    $params['still_id'] = $still_id;
+  }
+
+  $response = drush_mediamosa_execute_restcall($uri, $method, $params);
+  $result_id = (string) $response->header->request_result_id;
+  if ($result_id == mediamosa_sdk::ERRORCODE_OKAY) {
+    drush_print(dt('Still delete from asset: @id [ok]', array(
+      '@id' => $asset_id,
+    )));
+  }
+  else {
+    drush_print(dt('Still delete from asset: @id [fail @error_id]', array(
+      '@id' => $asset_id,
+      '@error_id' => $result_id,
+    )));
+  }
+}
+
+/**
  * Still generate for mediafile.
  *
  * @param string $mediafile_id
+ * @param int $priority
  * @param int $frametime
  * @param string $size
  *   Size, like 120x100.
  */
-function drush_mediamosa_library_still($mediafile_id, $frametime = NULL, $size = NULL) {
+function drush_mediamosa_library_still($mediafile_id, $priority = NULL, $frametime = NULL, $size = NULL) {
   $fields = array(
     mediamosa_asset_mediafile_db::ID,
     mediamosa_asset_mediafile_db::APP_ID,
@@ -266,6 +337,9 @@ function drush_mediamosa_library_still($mediafile_id, $frametime = NULL, $size =
     'app_id' => $mediafile[mediamosa_asset_mediafile_db::APP_ID],
     'user_id' => $mediafile[mediamosa_asset_mediafile_db::OWNER_ID],
   );
+  if ($priority) {
+    $params['priority'] = $priority;
+  }
   if ($frametime) {
     $params['frametime'] = $frametime;
   }

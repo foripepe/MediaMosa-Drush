@@ -34,13 +34,14 @@ function drush_mediamosa_mm_retranscode($mediafile_ids = NULL, $profile_id = NUL
     return drush_set_error('Requires Drupal 7 or higher installation.');
   }
 
+  $priority = (int) drush_get_option('priority');
 
   // Get the options.
   $mediafile_ids = explode(',', $mediafile_ids);
 
   // Transcode the mediafiles.
   drush_print(dt('[Starting to retranscode the mediafiles.]'));
-  _drush_mediamosa_mm_retranscode_mediafile($mediafile_ids, $profile_id);
+  _drush_mediamosa_mm_retranscode_mediafile($mediafile_ids, $profile_id, $priority);
   drush_print(dt('[Retranscode the mediafiles is finished.]'));
 }
 
@@ -48,12 +49,17 @@ function drush_mediamosa_mm_retranscode($mediafile_ids = NULL, $profile_id = NUL
  * Implementation of drush_COMMAND_validate().
  * Other way: drush_hook_COMMAND_validate().
  */
-function drush_mediamosa_mm_retranscode_validate($mediafile_ids = NULL) {
+function drush_mediamosa_mm_retranscode_validate($mediafile_ids = NULL, $profile_id = NULL) {
   if (!$mediafile_ids) {
-    return drush_set_error('PARAMETER_MISSING', dt('Parameter is missing. See "drush help mm-transcode".'));
+    return drush_set_error('PARAMETER_MISSING', dt('Parameter is missing. See "drush help mm-retranscode".'));
   }
 
   // TODO: profile_id check.
+
+  $priority = drush_get_option('priority');
+  if ($priority && (!is_numeric($priority) || $priority < -100 || $priority > 100)) {
+    return drush_set_error('PRIORITY_PARAMETER_IS_NOT_VALID', dt('Priority parameter is not valid. See "drush help mm-retranscode".'));
+  }
 }
 
 /**
@@ -63,10 +69,10 @@ function drush_mediamosa_mm_retranscode_validate($mediafile_ids = NULL) {
  * @param $mediafile_ids array
      A not empty array with mediafile ids.
  */
-function _drush_mediamosa_mm_retranscode_mediafile($mediafile_ids, $profile_id = NULL) {
+function _drush_mediamosa_mm_retranscode_mediafile($mediafile_ids, $profile_id = NULL, $priority = NULL) {
   foreach ($mediafile_ids as $key => $mediafile_id) {
     if (drush_mediamosa_library_get_available_job_slots() > 0) {
-      drush_mediamosa_library_retranscode($mediafile_id, $profile_id);
+      drush_mediamosa_library_retranscode($mediafile_id, $profile_id, $priority);
       unset($mediafile_ids[$key]);
     }
     else {

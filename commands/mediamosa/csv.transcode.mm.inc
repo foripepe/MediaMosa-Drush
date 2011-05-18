@@ -34,6 +34,8 @@ function drush_mediamosa_mm_transcode_csv($csv = NULL, $profile_id = NULL) {
     return drush_set_error('Requires Drupal 7 or higher installation.');
   }
 
+  $priority = (int) drush_get_option('priority');
+
   // Get the options.
   $mediafile_ids = drush_mediamosa_library_file_open_check($csv);
   if (!$mediafile_ids) {
@@ -42,7 +44,7 @@ function drush_mediamosa_mm_transcode_csv($csv = NULL, $profile_id = NULL) {
 
   // Transcode the mediafiles.
   drush_print(dt('[Starting to transcode the mediafiles.]'));
-  _drush_mediamosa_mm_transcode_csv_mediafile($csv, $mediafile_ids, $profile_id);
+  _drush_mediamosa_mm_transcode_csv_mediafile($csv, $mediafile_ids, $profile_id, $priority);
   drush_print(dt('[Transcode the mediafiles is finished.]'));
 }
 
@@ -50,7 +52,7 @@ function drush_mediamosa_mm_transcode_csv($csv = NULL, $profile_id = NULL) {
  * Implementation of drush_COMMAND_validate().
  * Other way: drush_hook_COMMAND_validate().
  */
-function drush_mediamosa_mm_transcode_csv_validate($csv = NULL) {
+function drush_mediamosa_mm_transcode_csv_validate($csv = NULL, $profile_id = NULL) {
   if (!$csv) {
     return drush_set_error('PARAMETER_MISSING', dt('Parameter is missing. See "drush help mm-transcode-csv".'));
   }
@@ -65,6 +67,13 @@ function drush_mediamosa_mm_transcode_csv_validate($csv = NULL) {
   if (!is_writable($csv)) {
     return drush_set_error('INPUT_FILE_NOT_WRITABLE', dt('The CSV input file (@file) is not writable. See "drush help mm-transcode-csv".', array('@file' => $csv)));
   }
+
+  // TODO: profile_id check.
+
+  $priority = drush_get_option('priority');
+  if ($priority && (!is_numeric($priority) || $priority < -100 || $priority > 100)) {
+    return drush_set_error('PRIORITY_PARAMETER_IS_NOT_VALID', dt('Priority parameter is not valid. See "drush help mm-transcode-csv".'));
+  }
 }
 
 /**
@@ -74,11 +83,11 @@ function drush_mediamosa_mm_transcode_csv_validate($csv = NULL) {
  * @param $mediafile_ids array
      A not empty array with mediafile ids.
  */
-function _drush_mediamosa_mm_transcode_csv_mediafile($csv, $mediafile_ids, $profile_id = NULL) {
+function _drush_mediamosa_mm_transcode_csv_mediafile($csv, $mediafile_ids, $profile_id = NULL, $priority = NULL) {
   try {
     foreach ($mediafile_ids as $key => $mediafile_id) {
       if (drush_mediamosa_library_get_available_job_slots() > 0) {
-        drush_mediamosa_library_transcode($mediafile_id, $profile_id);
+        drush_mediamosa_library_transcode($mediafile_id, $profile_id, $priority);
         unset($mediafile_ids[$key]);
       }
       else {

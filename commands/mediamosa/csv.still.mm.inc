@@ -34,6 +34,8 @@ function drush_mediamosa_mm_still_csv($csv = NULL, $frametime = NULL, $size = NU
     return drush_set_error('Requires Drupal 7 or higher installation.');
   }
 
+  $priority = (int) drush_get_option('priority');
+
   // Get the options.
   $mediafile_ids = drush_mediamosa_library_file_open_check($csv);
   if (!$mediafile_ids) {
@@ -42,7 +44,7 @@ function drush_mediamosa_mm_still_csv($csv = NULL, $frametime = NULL, $size = NU
 
   // Transcode the mediafiles.
   drush_print(dt('[Starting to still generation the mediafiles.]'));
-  _drush_mediamosa_mm_still_csv_mediafile($csv, $mediafile_ids, $frametime, $size);
+  _drush_mediamosa_mm_still_csv_mediafile($csv, $mediafile_ids, $priority, $frametime, $size);
   drush_print(dt('[Still generation for mediafiles has finished.]'));
 }
 
@@ -66,6 +68,12 @@ function drush_mediamosa_mm_still_csv_validate($csv = NULL, $frametime = NULL, $
     return drush_set_error('INPUT_FILE_NOT_WRITABLE', dt('The CSV input file (@file) is not writable. See "drush help mm-still-csv".', array('@file' => $csv)));
   }
 
+  // Priority check.
+  $priority = drush_get_option('priority');
+  if ($priority && (!is_numeric($priority) || $priority < -100 || $priority > 100)) {
+    return drush_set_error('PRIORITY_PARAMETER_IS_NOT_VALID', dt('Priority parameter is not valid. See "drush help mm-still-csv".'));
+  }
+
   // Frametime check.
   if ($frametime && (!is_numeric($frametime) || $frametime < 0)) {
     return drush_set_error('FRAMETIME_VALIDATION_FAILS', dt('The frametime (@frametime) is not numeric. See "drush help mm-still-csv".', array('@frametime' => $frametime)));
@@ -81,11 +89,11 @@ function drush_mediamosa_mm_still_csv_validate($csv = NULL, $frametime = NULL, $
  * @param $mediafile_ids array
      A not empty array with mediafile ids.
  */
-function _drush_mediamosa_mm_still_csv_mediafile($csv, $mediafile_ids, $frametime = NULL, $size = NULL) {
+function _drush_mediamosa_mm_still_csv_mediafile($csv, $mediafile_ids, $priority = NULL, $frametime = NULL, $size = NULL) {
   try {
     foreach ($mediafile_ids as $key => $mediafile_id) {
       if (drush_mediamosa_library_get_available_job_slots() > 0) {
-        drush_mediamosa_library_still($mediafile_id, $frametime, $size);
+        drush_mediamosa_library_still($mediafile_id, $priority, $frametime, $size);
         unset($mediafile_ids[$key]);
       }
       else {

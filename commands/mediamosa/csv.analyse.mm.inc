@@ -34,6 +34,8 @@ function drush_mediamosa_mm_analyse_csv($csv = NULL, $hint = NULL) {
     return drush_set_error('Requires Drupal 7 or higher installation.');
   }
 
+  $priority = (int) drush_get_option('priority');
+
   // Get the options.
   $mediafile_ids = drush_mediamosa_library_file_open_check($csv);
   if (!$mediafile_ids) {
@@ -42,7 +44,7 @@ function drush_mediamosa_mm_analyse_csv($csv = NULL, $hint = NULL) {
 
   // Analyse the mediafiles.
   drush_print(dt('[Starting to analyse the mediafiles.]'));
-  _drush_mediamosa_mm_analyse_csv_mediafile($csv, $mediafile_ids, $hint);
+  _drush_mediamosa_mm_analyse_csv_mediafile($csv, $mediafile_ids, $hint, $priority);
   drush_print(dt('[Analyse the mediafiles is finished.]'));
 }
 
@@ -68,8 +70,13 @@ function drush_mediamosa_mm_analyse_csv_validate($csv = NULL, $hint = NULL) {
 
   if ($hint) {
     if (!in_array(drupal_strtoupper($hint), array('TRUE', 'FALSE'))) {
-      return drush_set_error('HINT_PARAMETER_IS_NOT_VALID', dt('Hint parameter is not valid. See "drush help mm-analyse".'));
+      return drush_set_error('HINT_PARAMETER_IS_NOT_VALID', dt('Hint parameter is not valid. See "drush help mm-analyse-csv".'));
     }
+  }
+
+  $priority = drush_get_option('priority');
+  if ($priority && (!is_numeric($priority) || $priority < -100 || $priority > 100)) {
+    return drush_set_error('PRIORITY_PARAMETER_IS_NOT_VALID', dt('Priority parameter is not valid. See "drush help mm-analyse-csv".'));
   }
 }
 
@@ -80,11 +87,11 @@ function drush_mediamosa_mm_analyse_csv_validate($csv = NULL, $hint = NULL) {
  * @param $mediafile_ids array
      A not empty array with mediafile ids.
  */
-function _drush_mediamosa_mm_analyse_csv_mediafile($csv, $mediafile_ids, $hint) {
+function _drush_mediamosa_mm_analyse_csv_mediafile($csv, $mediafile_ids, $hint = NULL, $priority = NULL) {
   try {
     foreach ($mediafile_ids as $key => $mediafile_id) {
       if (drush_mediamosa_library_get_available_job_slots() > 0) {
-        drush_mediamosa_library_analyse($mediafile_id, $hint);
+        drush_mediamosa_library_analyse($mediafile_id, $hint, $priority);
         unset($mediafile_ids[$key]);
       }
       else {
